@@ -22,7 +22,7 @@ func newCopyCommand() *cobra.Command {
 		Use:   "copy",
 		Short: "Copy the images in the manifest directly from source to target repository",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			flags := []string{"dryrun", "images", "target", "force", "override-arch", "override-os", "all-variants"}
+			flags := []string{"dryrun", "images", "target", "force", "override-arch", "override-os", "all-variants", "include-foreign-layers"}
 			for _, flag := range flags {
 				if err := viper.BindPFlag(flag, cmd.Flags().Lookup(flag)); err != nil {
 					return fmt.Errorf("bind flag: %w", err)
@@ -52,6 +52,7 @@ func newCopyCommand() *cobra.Command {
 	cmd.Flags().StringP("override-arch", "a", "", "Architecture variant of the image if it is a multi-arch image")
 	cmd.Flags().StringP("override-os", "o", "", "Operating system variant of the image if it is a multi-os image")
 	cmd.Flags().Bool("all-variants", false, "Copy all variants of the image")
+	cmd.Flags().Bool("include-foreign-layers", false, "Copy foreign layers of the image")
 
 	return &cmd
 }
@@ -117,6 +118,9 @@ func runCopyCommand() error {
 	}
 
 	var copyOptions copy.Options
+
+	copyOptions.DownloadForeignLayers = viper.GetBool("include-foreign-layers")
+
 	if viper.GetBool("all-variants") {
 		copyOptions.ImageListSelection = copy.CopyAllImages
 	} else {
